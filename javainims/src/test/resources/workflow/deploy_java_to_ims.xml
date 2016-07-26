@@ -1,0 +1,1145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<workflow xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                          xsi:noNamespaceSchemaLocation="../workflow/schemas/workflow_v1.xsd">
+
+
+<!-- *******************************************************************************
+*************************************************************************************
+***********    W O R K F L O W    I D    I N F O R M A T I O N               ********
+*************************************************************************************
+************************************************************************************* -->
+<workflowInfo>
+	<workflowID>IMS Deployment of a Java Application</workflowID>
+	<workflowDescription>IMS Deployment of a Java Application</workflowDescription>
+	<workflowVersion>1.0</workflowVersion>
+	<vendor>IBM</vendor>
+	<Configuration>
+		<productID>5635A0400</productID>
+		<productName>IMS</productName>
+		<productVersion>Version 14</productVersion>
+ 	</Configuration>
+</workflowInfo>
+
+
+ <!-- ********************************************************************************
+**************************************************************************************
+***********  G E N E R I C    W O R K F L O W      V A R I A B L E S          ********
+**************************************************************************************
+************************************************************************************** -->
+  <variable name="TSO_USERID" >
+	<label>TSOUSERID</label>
+	<abstract>TSO user ID</abstract>
+	<description>
+		An authorized TSOUSERID is needed to execute the Workflow's steps.
+		TSOUSERID maximum length is 7, and it cannot start with a number.
+	</description>
+	<category>Identity related</category>
+	<string>
+		<validationType>TSOUSERID</validationType>
+	</string>
+</variable>
+
+<variable name="DFS_IMS_LIB_HLQ" scope="global">
+	<label>Data set HLQ</label>
+	<abstract>High-level qualifier</abstract>
+	<description>The data set high-level qualifier of the IMS System libraries
+	
+	<p>
+				A validation type of DSNAME allows a maximum of 44 alphanumeric (upper case letters only) characters,
+				including the national characters, as well as "-". However, the name must start with a letter or national.
+				The name consists of 1-8 character qualifiers separated by a period.
+				</p>
+				
+				</description>
+	<category>Data set related</category>
+	<string>
+		<validationType>DSNAME</validationType>
+		<default>ZOSMF</default>
+	</string>
+</variable>
+
+
+ 
+
+<!-- *********************************************************************************
+**************************************************************************************
+***********  Z / O S    R E L A T E D    V A R I A B L E S                    ********
+**************************************************************************************
+************************************************************************************** -->
+<variable name="zOS_CSSLIB" scope="global">    <!-- z/OS PROC Library (SYS1.CSSLIB) -->
+	<label>z/OS System Services Library</label>
+	<abstract>z/OS System Services DSN</abstract>
+	<description>
+				Specifies the name of the CSSLIB data set. If you specify a library other than SYS1.CSSLIB, you must ensure that SYS1.CSSLIB occurs within the LNKLST concatenation.
+				The system places the CSSLIB data set after the MIGLIB data set in the LNKLST concatenation.
+				Default: If you do not specify CSSLIB, the workflow will use SYS1.CSSLIB as the CSSLIB data set.
+				For more information refer to <a href="https://www-01.ibm.com/support/knowledgecenter/SSLTBW_2.1.0/com.ibm.zos.v2r1.ieae100/ieae10018.htm">z/OS MVS Initialization and Tuning Guide </a>
+				<br> </br>
+				A validation type of DSNAME allows a maximum of 44 alphanumeric (upper case letters only) characters,
+				including the national characters, as well as "-". However, the name must start with a letter or national.
+				The name consists of 1-8 character qualifiers separated by a period.
+	</description>
+	<category>z/OS System</category>
+	<string>
+		<validationType>DSNAME</validationType>
+		<choice>SYS2.CSSLIB</choice>
+		<default>SYS1.CSSLIB</default>
+	</string>
+</variable>
+
+<variable name="zOS_LErunlib" scope="global">
+	<label>Language Environment runtime library</label>
+	<abstract>Data set name used as Language Environment runtime library</abstract>
+	<description>
+				Provide a valid data set name of the Language Environment runtime library to be used by this package.
+				<br> </br>
+				A validation type of DSNAME allows a maximum of 44 alphanumeric (upper case letters only) characters, 
+				including the national characters, as well as "-". However, the name must start with a letter or national. 
+				The name consists of 1-8 character qualifiers separated by a period.
+	</description>
+	<category>z/OS System</category>
+	<string>
+		<validationType>DSNAME</validationType>
+	</string>
+</variable>
+
+
+<variable name="zOS_MACLIB" scope="global">  <!-- z/OS Macro Library -->
+	<label>z/OS Macros library</label>
+	<abstract>z/OS Macros library DSN</abstract>
+	<description>
+				Provide a valid data set name of the library containing z/OS macros.
+				<br> </br>
+				A validation type of DSNAME allows a maximum of 44 alphanumeric (upper case letters only) characters,
+				including the national characters, as well as "-". However, the name must start with a letter or national.
+				The name consists of 1-8 character qualifiers separated by a period.
+	</description>
+	<category>z/OS System</category>
+	<string>
+		<validationType>DSNAME</validationType>
+		<choice>SYS1.AMACLIB</choice>
+		<default>SYS1.MACLIB</default>
+	</string>
+</variable>
+
+
+<!-- *********************************************************************************
+**************************************************************************************
+***********  I M S     S Y S T E M     R E L A T E D       V A R I A B L E S  ********
+**************************************************************************************
+************************************************************************************** -->
+<variable name="DFS_IMS_PLEX" scope="global">
+	<label>IMSPLEX name</label>
+	<abstract>IMSPLEX name</abstract>
+	<description>The IMSPLEX in which your IMS instance resides. This information is used to enter IMS TSO SPOC commands</description>
+	<category>IMS Environment</category>
+	<string>
+		<regularExpression>[A-Z0-9]{1,8}</regularExpression>
+	</string>
+</variable>
+
+<variable name="DFS_IMS_SSID" scope="global">
+	<label>IMSID</label>
+	<abstract>IMS identification</abstract>
+	<description>The IMS ID of the system that will run the transaction</description>
+	<category>IMS Environment</category>
+	<string>
+		<regularExpression>[A-Z0-9]{1,4}</regularExpression>
+	</string>
+</variable>
+
+
+<variable name="DFS_proclib" scope="global">
+	<label>Authorized IMS PROCLIB </label>
+	<abstract>Data set name of an IMS authorized procedures library</abstract>
+	<description>
+				Provide a valid Data set name of an IMS authorized procedures library (PROCLIB) to be used by this process.
+				<p>
+				A validation type of DSNAME allows a maximum of 44 alphanumeric (upper case letters only) characters,
+				including the national characters, as well as "-". However, the name must start with a letter or national.
+				The name consists of 1-8 character qualifiers separated by a period.
+				</p>
+	</description>
+	<category>IMS data set</category>
+	<string>
+		<validationType>DSNAME</validationType>
+	</string>
+</variable>
+
+<variable name="DFS_reslib" scope="global">
+	<label>IMS RESLIB</label>
+	<abstract>Data set name of the installed IMS RESLIB</abstract>
+	<description>
+				Provide a valid data set name of the IMS RESLIB to be used by this process.
+				The RESLIB or SDFSRESL is a library containing all the load modules for IMS.
+				<p>
+				A validation type of DSNAME allows a maximum of 44 alphanumeric (upper case letters only) characters,
+				including the national characters, as well as "-". However, the name must start with a letter or national.
+				The name consists of 1-8 character qualifiers separated by a period.
+				</p>
+	</description>
+	<category>IMS data set</category>
+	<string>
+		<validationType>DSNAME</validationType>
+	</string>
+</variable>
+
+<variable name="DFS_pgmlib" scope="instance">
+	<label>Programs Library</label>
+	<abstract>Data set name of the library containing programs executed by IMS</abstract>
+	<description>
+				Provide a valid data set name of the library to be used by this process and containing the compile output of the Java application (executable).
+				<p>This value is optional if there is no need for planned executables to reside in a data set.</p>
+				<p>
+				A validation type of DSNAME allows a maximum of 44 alphanumeric (upper case letters only) characters,
+				including the national characters, as well as "-". However, the name must start with a letter or national.
+				The name consists of 1-8 character qualifiers separated by a period.
+				</p>
+	</description>
+	<category>IMS data set</category>
+	<string>
+		<validationType>DSNAME</validationType>
+		<default>PGMLIB</default>
+	</string>
+</variable>
+
+
+<!-- *********************************************************************************
+**************************************************************************************
+***********  A P P L I C A T I O N     V A R I A B L E S                      ********
+**************************************************************************************
+************************************************************************************** -->
+<variable name="DFS_appname">
+	<label>IMS application program name</label>
+	<abstract>IMS application program name (PGM)</abstract>
+	<description>The IMS application program name that will be used during the create program step of the workflow. 
+	This name will also be used as the IMS PSB Name.
+		
+	<p>Specifies the 1-8 character name of the program. Names must be alphanumeric (A through Z, 0 through 9, #, $, and @). 
+	All program names must begin with an alphabetic character (A through Z, #, $, and @) followed by zero to seven alphanumeric characters. 
+	Names cannot include a blank, comma, period, hyphen, or equal sign. Names cannot begin with DFS, except for DFSIVPxx and DFSSAMxx. 
+	Names cannot be BASICEDT, DBCDM, DBF#FPU0, DBRC, ISCEDT, MSDB, SDB, or WTOR. Each local program name must be unique. </p>
+	</description>
+	<category>Application</category>
+	<string>
+		<regularExpression>[#S@A-Z0-9]{1,8}</regularExpression>
+	</string>
+</variable>
+
+<variable name="DFS_traname">
+	<label>IMS Transaction name</label>
+	<abstract>IMS transaction (TRAN) name</abstract>
+	<description> The IMS application transaction name that will be used during the create transaction step of the workflow.
+	<p>A transaction code will enable the application program associated with the program resource to be scheduled for execution in an IMS message processing region.</p>
+ 	<p>Specifies the 1-8 character name of the transaction. Names must be alphanumeric (A through Z, 0 through 9, #, $, and @). 
+	Names cannot include a blank, comma, period, hyphen, or equal sign. Names cannot begin with DFS, except for DFSCONE, DFSIVPxx, and DFSSAMxx. 
+	Names cannot be BASICEDT, DBCDM, DBRC, ISCEDT, MSDB, SDB, or WTOR. A transaction resource and a transaction descriptor can have the same name. 
+	A transaction cannot have the same name as an lterm.</p>
+	</description>
+	<category>Application</category>
+	<string>
+		<regularExpression>[#S@A-Z0-9]{1,8}</regularExpression>
+	</string>
+</variable>
+
+<variable name="DFS_tranclass">
+	<label>IMS Transaction message class</label>
+	<abstract>IMS Transaction message class</abstract>
+	<description>The message class that is assigned to a transaction determines into which message region (JMP) an application program is loaded and executed.
+	<p>A transaction can be scheduled if there is a message processing region available for that class. The value can be a number from 1 to 999.</p>
+	</description>
+	<category>Application</category>
+	<string>
+		<regularExpression>[0-9]{3,3}</regularExpression>
+		<choice>001</choice>
+		<choice>002</choice>
+		<choice>003</choice>
+		<choice>004</choice>
+		<default>009</default>
+	</string>
+</variable>
+
+
+
+<!-- *********************************************************************************
+**************************************************************************************
+***********  J A V A     F O R     I M S     R E L A T E D       V A R I A B L E S ***
+**************************************************************************************
+************************************************************************************** -->
+<variable name="DFS_jvmpath" >
+	<label>IBM SDK for z/OS, Java Technology Edition</label>
+	<abstract>Path to the Java software development kit on USS</abstract>
+	<description>Provide the path to the Java SDK on USS. The SDK is needed to run the Java message processing (JMP) applications.
+	<br/>As an example the location may be: /java7/J7.0
+	</description>
+	<category>Java Environment</category>
+	<string>
+		<regularExpression>[a-zA-Z0-9/-_.]{1,50}</regularExpression>
+	</string>
+</variable>
+
+<variable name="DFS_classpath" >
+	<label>Java application class files</label>
+	<abstract>The location and name of user-defined jar file on USS</abstract>
+	<description>Provide the path to the jar file for your application. <p>Example: /u/my/path/MyApp.jar</p>
+	</description>
+	<category>Java Environment</category>
+	<string>
+		<regularExpression>[a-zA-Z0-9/-_.]{1,50}</regularExpression>
+	</string>
+</variable>
+
+
+<!-- In the Java language, the runtime system starts by calling the class's main() method. 
+	 The main() method then calls all the other methods required to run your application. -->
+<variable name="DFS_java_main">
+	<label>Java class main method</label>
+	<abstract>Path to Java class which has the main method</abstract>
+	<description>The class with the main method is the entry point for the program associated with the transaction. 
+	<br/>An example path would be com/ibm/ims/jmp/HelloWorld where HelloWorld is a Java .class file. 
+	<br/> 	
+	</description>
+	<category>Java Environment</category>
+	<string>
+		<regularExpression>[a-zA-Z0-9/-_.]{1,50}</regularExpression>
+	</string>
+</variable>
+
+
+<variable name="DFS_imslibpath">
+	<label>IMS Java jars</label>
+	<abstract>Path to imsudb.jar and imsutm.jar on USS</abstract>
+	<description>Path on USS to the IMS Universal drivers jar (imsudb.jar), and the IMS Java dependent region resource adapter jar (imsutm.jar). 
+	<br/>These jars are typically located at the following path: <i>path_prefix</i>/usr/lpp/ims/ims14/imsjava when the IBM SDK for z/OS, Java Technology Edition, is installed.
+	</description>
+	<category>Java Environment</category>
+	<string>
+		<regularExpression>[a-zA-Z0-9/-_.]{1,50}</regularExpression>
+	</string>
+</variable>
+
+<variable name="DFS_initial_heapsize">
+	<label>Initial heap size</label>
+	<abstract>Heap size in megabytes</abstract>
+	<description>The heap sizes should be set to values such that the maximum amount of memory used by the VM does not exceed the amount available.
+	<br/>
+	As a general rule, set initial heap size equal to the maximum heap size to minimize garbage collections.
+	</description>
+	<category>JVM Options</category>
+	<integer>
+		<minValue>1</minValue>
+		<maxValue>1024</maxValue>
+		<default>1</default>
+	</integer>
+</variable>
+
+<variable name="DFS_max_heapsize">
+	<label>Maximum Java heap</label>
+	<abstract>Maximum size in megabytes.</abstract>
+	<description>The heap sizes should be set to values such that the maximum amount of memory used by the VM does not exceed the amount available.
+	</description>
+	<category>JVM Options</category>
+	<integer>
+		<minValue>1</minValue>
+		<maxValue>1024</maxValue>
+		<default>32</default>
+	</integer>
+</variable>
+
+
+<variable name="DFS_os_stack_size">
+	<label>Stack size for operating system threads</label>
+	<abstract>Size in kilobytes. </abstract>
+	<description>The maximum value for the stack size varies according to the specific machine configuration. 
+	If you exceed the maximum value, a java/lang/StackOverflowError message is reported.
+	</description>
+	<category>JVM Options</category>
+	<integer>
+		<minValue>512</minValue>
+		<maxValue>2048</maxValue>
+		<default>512</default>
+	</integer>
+</variable>
+
+<variable name="DFS_thread_stack_size">
+	<label>Stack size for Java threads</label>
+	<abstract>Size in kilobytes</abstract>
+	<description>The maximum value varies according to the specific machine configuration. 
+	If you exceed the maximum value, a java/lang/OutOfMemoryError message is reported.
+	</description>
+	<category>JVM Options</category>
+	<integer>
+		<minValue>256</minValue>
+		<maxValue>2048</maxValue>
+		<default>256</default>
+	</integer>
+</variable>
+
+<variable name="DFS_workingdir">
+	<label>Working directory</label>
+	<abstract>Path on USS for the working directory</abstract>
+	<description>
+		Java for IMS working directory needed for the workflow execution.  An example would be /u/imsjavauser
+		<br/>There is no default for this variable.  The Java System.out and System.err streams will be written to this location.			
+	</description>
+	<category>Java Environment</category>
+	<string>
+		<regularExpression>[a-zA-Z0-9/-_.]{1,50}</regularExpression>		
+	</string>
+</variable>
+
+
+<!-- ********************************************************** -->
+<!-- ********************************************************** -->
+<!-- Below the steps of the workflow process                    -->
+<!-- ********************************************************** -->
+<!-- ********************************************************** -->
+<step name="GatherVariables" >         <title>Environment Variables Gathering</title>
+        <description>
+        This step will allow you to enter the IMS and Java environment information needed for deploying the IMS Java application.
+        <p>
+		Instructions related to this step can be viewed under the Perform tab. You can view the instructions without executing this step.
+		</p>
+	</description>
+		<variableValue name="TSO_USERID" required="true"/>
+		<!-- High Level Qualifier of the IMS System Lib eg IMSVS.IMSID -->
+		<variableValue name="DFS_IMS_LIB_HLQ" required="true" scope="global"/>
+		
+		<!-- z/OS  related -->
+		<variableValue name="zOS_CSSLIB" required="true" scope="global"/>
+		<variableValue name="zOS_LErunlib" required="true" scope="global"/>
+		<variableValue name="zOS_MACLIB" required="true" scope="global"/>		
+		<!-- IMS System variables -->				
+		<variableValue name="DFS_IMS_PLEX" required="true" scope="global"/>
+		<variableValue name="DFS_IMS_SSID" required="true" scope="global"/>	
+		<!-- IMS Libraries -->
+		<variableValue name="DFS_proclib" required="true" scope="global"/>
+		<variableValue name="DFS_reslib" required="true" scope="global"/>
+		<variableValue name="DFS_pgmlib" required="false" scope="instance"/>		
+		<!-- IMS application variables -->	
+		<variableValue name="DFS_appname" required="true" />
+		<variableValue name="DFS_traname" required="true" />				
+		<variableValue name="DFS_tranclass" required="false" />	
+
+		<!-- java variables -->
+		<variableValue name="DFS_jvmpath" required="true" />
+		<variableValue name="DFS_imslibpath" required="true"  />
+		<variableValue name="DFS_classpath" required="true" />
+		<variableValue name="DFS_java_main" required="true" />
+		<variableValue name="DFS_workingdir" required="true" />
+		<!-- java environment variables for IMS -->
+		<variableValue name="DFS_initial_heapsize" required="false" />
+		<variableValue name="DFS_max_heapsize" required="false" />
+		<variableValue name="DFS_os_stack_size" required="false" />
+		<variableValue name="DFS_thread_stack_size" required="false" /> 
+		
+		
+		<instructions substitution="true">
+		 	
+		<p> Please review the information entered for accuracy. Use the back button to make changes.
+<ul>
+<li>TSOUSERID: ${instance-TSO_USERID}</li>
+<li>Data set HLQ: ${global-DFS_IMS_LIB_HLQ}</li>
+<li>z/OS System Services Library: ${global-zOS_CSSLIB}</li>
+<li>Language Environment runtime library: ${global-zOS_LErunlib}</li>
+<li>z/OS Macros library: ${global-zOS_MACLIB}</li>
+<li>IMSPLEX name: ${global-DFS_IMS_PLEX}</li>
+<li>IMSID: ${global-DFS_IMS_SSID}</li>
+<li>Authorized IMS PROCLIB: ${global-DFS_proclib}</li>
+<li>IMS RESLIB: ${global-DFS_reslib} </li>
+<li>Programs Library: ${instance-DFS_pgmlib} </li>
+
+<li>IMS application program name: ${instance-DFS_appname}</li>
+<li>IMS Transaction name: ${instance-DFS_traname} </li>
+<li>IMS Transaction message class: ${instance-DFS_tranclass} </li>
+
+<li>IBM SDK for z/OS, Java Technology Edition: ${instance-DFS_jvmpath}</li>
+<li>IMS Java jars: ${instance-DFS_imslibpath}</li>
+<li>Path to Java application class files: ${instance-DFS_classpath}</li>
+<li>Path to main method for the executable jar: ${instance-DFS_java_main}</li>
+<li>Working directory: ${instance-DFS_workingdir}</li>
+<li>-Xms JVM Option - initial heap size: ${instance-DFS_initial_heapsize}M</li>
+<li>-Xmx - JVM Option - maximum Java heap size of your program: ${instance-DFS_max_heapsize}M</li>
+<li>-Xmso - JVM Option - stack size for OS threads: ${instance-DFS_os_stack_size}k</li>
+<li>-Xss$ - JVM Option - maximum thread stack size: ${instance-DFS_thread_stack_size}k</li>
+	
+</ul>	
+		</p>
+		
+		</instructions>
+		<weight>5</weight>
+		<skills>System Programmer</skills>
+		<autoEnable>true</autoEnable>
+</step>
+
+
+<step name="work_ds_allocation">  	<title>Create workflow libraries</title>
+	<description>Define and prepare the data sets necessary to execute the application in IMS environment
+	<p>
+	Instructions related to this step can be viewed under the Perform tab. You can view the instructions without executing this step.
+	</p>
+	</description>
+	<prereqStep name="GatherVariables"/>
+	
+	<instructions substitution="true"><p>Create the partitioned data sets used by the execution of the Java for IMS workflow and the work data set used to store the JCL submitted to deploy the application program.<br/> 
+	These includes the following User-dedicated libraries:<br/>
+- Work Library: ${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.JOBS<br/> 
+- Programs library (PGMLIB): ${instance-TSO_USERID}.${instance-DFS_pgmlib}<br/>
+- PSB Source Library: ${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.PSB.SOURCE<br/> 
+- PSB compiled PSBLIB): ${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.PSBLIB<br/>
+- ACB library (ACBLIB): ${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.STAGING.ACBLIB<br/>
+
+<b>NOTE:If a data set has been already allocated the process will be skipped and a "NOT EXECUTED" message will be reported to the associated step.</b>
+</p>
+
+	</instructions>
+	<weight>5</weight>
+	<skills>System Programmer</skills>
+	<autoEnable>true</autoEnable>
+	<template>
+		<inlineTemplate substitution="true">//*
+//* CHECK FOR WORKLIB EXISTANCE
+//*
+//LSTDS1  EXEC PGM=IDCAMS
+//SYSPRINT DD SYSOUT=A
+//SYSIN    DD *
+     LISTCAT ENT('${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.JOBS')
+//*
+//* ALLOCATE JOBS DATA SET IF NOT THERE
+//*
+//ALLCWRK EXEC PGM=IEFBR14,COND=(0,EQ,LSTDS1)   
+//SYSUT2   DD  DISP=(NEW,CATLG),SPACE=(CYL,(10,10,5)),
+//         DSN=${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.JOBS,
+//*         STORCLAS=MFI,
+//         DCB=(LRECL=80,RECFM=FB,BLKSIZE=27920,DSORG=PO)
+//*
+//* CHECK FOR PGMLIB EXISTANCE
+//*
+//LSTSDS2  EXEC PGM=IDCAMS
+//SYSPRINT DD SYSOUT=A
+//SYSIN    DD *
+     LISTCAT ENT('${instance-TSO_USERID}.${instance-DFS_pgmlib}')
+//*
+//* ALLOCATE A PGMLIB IF ONE DOES NOT EXISTS
+//*
+//ALLPGMLB EXEC PGM=IEFBR14,COND=(0,EQ,LSTSDS2)
+//SYSUT2   DD  DISP=(NEW,CATLG),SPACE=(CYL,(10,10,5)),
+//         DSN=${instance-TSO_USERID}.${instance-DFS_pgmlib},
+//*         STORCLAS=MFI,
+//         DCB=(LRECL=0,RECFM=U,BLKSIZE=32760,DSORG=PO)
+//*
+/*
+//*
+//* CHECK FOR PSB SOURCE LIB EXISTANCE
+//*
+//LSTSDS3  EXEC PGM=IDCAMS
+//SYSPRINT DD SYSOUT=A
+//SYSIN    DD *
+     LISTCAT ENT('${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.PSB.SOURCE')
+//*
+//* ALLOCATE PSB SOURCE LIB IF ONE DOES NOT EXISTS
+//*
+//ALLPSBSR EXEC PGM=IEFBR14,COND=(0,EQ,LSTSDS3)
+//SYSUT2   DD  DISP=(NEW,CATLG),SPACE=(CYL,(10,10,5)),
+//         DSN=${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.PSB.SOURCE,
+//*         STORCLAS=MFI,
+//         DCB=(LRECL=80,RECFM=FB,BLKSIZE=27920,DSORG=PO)
+//*
+/*
+//*
+//* CHECK FOR USER-DEDICATED PSBLIB EXISTANCE
+//*
+//LSTSDS4  EXEC PGM=IDCAMS
+//SYSPRINT DD SYSOUT=A
+//SYSIN    DD *
+     LISTCAT ENT('${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.PSBLIB')
+//*
+//* ALLOCATE USER-DEDICATED PSBLIB IF ONE DOES NOT EXISTS
+//*
+//ALLPSBSR EXEC PGM=IEFBR14,COND=(0,EQ,LSTSDS4)
+//SYSUT2   DD  DISP=(NEW,CATLG),SPACE=(CYL,(10,10,5)),
+//         DSN=${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.PSBLIB,
+//*         STORCLAS=MFI,
+//         DCB=(LRECL=0,RECFM=U,BLKSIZE=32760,DSORG=PO)
+//*
+/*
+//*
+//* CHECK FOR USER-DEDICATED ACBLIB STAGING LIB EXISTANCE
+//*
+//LSTSDS5  EXEC PGM=IDCAMS
+//SYSPRINT DD SYSOUT=A
+//SYSIN    DD *
+     LISTCAT ENT('${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.PSBLIB')
+//*
+//* ALLOCATE USER-DEDICATED ACBLIB STAGING LIB IF 1 DOES NOT EXISTS
+//*
+//ALLACBST EXEC PGM=IEFBR14,COND=(0,EQ,LSTSDS5)
+//SYSUT2   DD  DISP=(NEW,CATLG),SPACE=(CYL,(10,10,5)),
+//         DSN=${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.STAGING.ACBLIB,
+//*         STORCLAS=MFI,
+//         DCB=(LRECL=0,RECFM=U,BLKSIZE=32760,DSORG=PO)
+//*
+/*
+</inlineTemplate>
+			<submitAs maxRc="4">JCL</submitAs>
+			<maxLrecl>80</maxLrecl>
+	</template>
+</step>
+ 
+<step name="SetupJavaEnvironent">
+	<title>JAVA for IMS environment preparation</title>
+	<description>Setup the IMS Resources necessary to execute the application.
+	<p>
+	Instructions related to this step can be viewed under the Perform tab. You can view the instructions without executing this step.
+	</p></description>
+	<prereqStep name="work_ds_allocation"/>
+
+
+	<step name="link_code"> 	<title>Java dependent region resource adapter set up</title>
+		<description>A symbolic link is created on USS to the DFSCLIBU load module.
+		<p>
+	Instructions related to this step can be viewed under the Perform tab. You can view the instructions without executing this step.
+	</p>
+	</description>
+		<prereqStep name="GatherVariables" />
+			
+		<instructions substitution="true"> 
+		The IMS Java dependent region resource adapter invokes the Universal Drivers C library (DFSCLIBU) through JNI calls. 
+		<p>A symbolic link is created to the C-code JNI layer that IMS ships in the ${global-DFS_IMS_LIB_HLQ}.SDFSJLIB library. The link, libT2DLI.so is created in the ${instance-DFS_imslibpath} directory on USS.</p>
+		<p>The user id ${instance-TSO_USERID} must have superuser privileges for the link to be created.</p> 
+		
+		<p>If the job return code is 1 it is because the link already exists.</p>
+		<p>For more information <a href="http://www-01.ibm.com/support/knowledgecenter/SSEPH2_14.1.0/com.ibm.ims14.doc.apg/ims_jdrprog.htm?lang=en">Programming with IMS Java dependent resource adapter</a></p>
+		
+		</instructions>
+		<weight>3</weight>
+		<skills>System Programmer</skills>
+		<autoEnable>true</autoEnable>
+		<template> 
+	       		<inlineTemplate substitution="true">//SIMLINK  EXEC PGM=BPXBATCH,REGION=0M                                  
+//STEPLIB  DD  DSN=CEE.SCEERUN,DISP=SHR                                 
+//STDERR   DD  PATH='${instance-DFS_workingdir}/mystd.err',                                
+//             PATHDISP=(KEEP,KEEP),                                    
+//             PATHOPTS=(OWRONLY,OCREAT,OTRUNC),                        
+//             PATHMODE=(SIRWXU,SIRWXG,SIRWXO)                          
+//STDPARM  DD   *                                                       
+SH su; cd ${instance-DFS_imslibpath}; ln -e DFSCLIBU libT2DLI.so; 
+/* </inlineTemplate>
+	       		<submitAs maxRc="1">JCL</submitAs>
+				<maxLrecl>80</maxLrecl>
+	<saveAsDataset substitution="true">${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.JOBS(SIMLINK)</saveAsDataset>
+	       	</template>
+	</step>
+	
+	<step name="create_JMP">  	<title>Create the Java Message Processing (JMP) Region</title>
+		<description>This step creates the JMP Region jcl needed to run your application in IMS 
+		<p>
+		Instructions related to this step can be viewed under the Perform tab. You can view the instructions without executing this step.
+		</p>
+		</description>
+		<prereqStep name="GatherVariables"/>
+		<instructions substitution="true" >
+		
+		The ${global-DFS_IMS_SSID}JMP procedure will be stored in ${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.JOBS library.
+		 
+			<p>The Java System.out stream will be written to ${instance-DFS_workingdir}/jvm.out.  The Java System.err stream will be written to ${instance-DFS_workingdir}/jvm.err.</p>
+			<p>The JMP region processing CLASS will be ${instance-DFS_tranclass} as entered in the gathering variables step.</p>
+			
+			<p>	If this member is already present in your environment ${global-DFS_proclib}(RC=4), <b>it will not be replaced by the workflow.</b>
+			To replace the existing member ${global-DFS_IMS_SSID}JMP with the version provided in this workflow edit the job and the SYSIN DD parm changing from ADD to REPL.
+			</p>	
+			<p>For more information see <a href="https://www-01.ibm.com/support/knowledgecenter/SSEPH2_14.1.0/com.ibm.ims14.doc.apg/ims_container_jdrprogramming.htm?lang=en">Java dependent regions</a></p>
+		</instructions>
+		<weight>5</weight>
+		<skills>System Programmer</skills>
+		<autoEnable>true</autoEnable>
+		<template>
+			<inlineTemplate substitution="true">//*
+//* NOTE: IF THIS MEMBER EXISTS IT WILL NOT BE
+//*       REPLACED. IF YOU WISH TO USE THE SUGGESTED 
+//*       SETTINGS FOR THE JVM OPTIONS CHANGE
+//*       THE SYSIN CONTROL STATEMENT FROM ADD TO REPL
+//*
+//UPDTPRC    EXEC PGM=IEBUPDTE,PARM=MOD
+//SYSPRINT DD   SYSOUT=*
+//SYSUT1   DD   DSNAME=${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.JOBS,
+//         DISP=SHR
+//SYSUT2   DD   DSNAME=${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.JOBS,
+//         DISP=SHR
+//SYSIN    DD   DATA
+./        ADD   NAME=${global-DFS_IMS_SSID}JMP,LEVEL=00,SOURCE=0,LIST=ALL
+//${global-DFS_IMS_SSID}JMP  JOB ,
+// CLASS=A,MSGCLASS=H,MSGLEVEL=(1,1),NOTIFY=${instance-TSO_USERID},REGION=0M
+//       JCLLIB ORDER=${global-DFS_proclib}
+//*******************************************************
+//*
+//* JCL FOR THE IMS JAVA REGION (JMP) USED TO EXECUTE YOUR JAVA
+//* PROGRAM
+//*
+//* AUTHOR            LAST CHANGED        PROJECT
+//* ---------------   --------------      -------------------
+//* ${instance-TSO_USERID}         01/22/16          ${instance-DFS_appname}
+//*******************************************************
+//       EXEC DFSJMP,
+//            IMSID=${global-DFS_IMS_SSID},JVMOPMAS=DFSJVMMS,ENVIRON=DFSJVMEV,
+//            CL1=${instance-DFS_tranclass},CL2=${instance-DFS_tranclass},CL3=${instance-DFS_tranclass},CL4=${instance-DFS_tranclass}
+//STEPLIB  DD DSN=${global-DFS_IMS_LIB_HLQ}.SDFSJLIB,DISP=SHR
+//         DD DSN=${global-DFS_reslib},DISP=SHR
+//         DD DSN=${global-zOS_LErunlib},DISP=SHR
+//         DD DSN=${global-zOS_CSSLIB},DISP=SHR
+//PROCLIB  DD DSN=${global-DFS_proclib},DISP=SHR
+//JAVAOUT  DD  PATH='${instance-DFS_workingdir}/jvm.out',
+//             PATHDISP=(KEEP,KEEP),
+//             PATHOPTS=(OWRONLY,OCREAT,OTRUNC),
+//             PATHMODE=(SIRWXU,SIRWXG,SIRWXO)
+//JAVAERR  DD  PATH='${instance-DFS_workingdir}/jvm.err',
+//             PATHDISP=(KEEP,KEEP),
+//             PATHOPTS=(OWRONLY,OCREAT,OTRUNC),
+//             PATHMODE=(SIRWXU,SIRWXG,SIRWXO)
+./      ENDUP
+/*</inlineTemplate>
+	<submitAs maxRc="4">JCL</submitAs>
+				<maxLrecl>80</maxLrecl>
+	<saveAsDataset substitution="true">${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.JOBS(STARTJMP)</saveAsDataset>			
+		</template>
+	</step>
+		
+	<step name="create_DFSJVMEV">  	<title>Specifies the Java Virtual Machine (JVM) environment settings.</title>
+		<description>Creates DFSJVMEV member in the IMS PROCLIB data set.
+		<p>
+		Instructions related to this step can be viewed under the Perform tab. You can view the instructions without executing this step.
+		</p>
+		</description>
+		<prereqStep name="GatherVariables"/>
+		<instructions substitution="true">The location of the Java Virtual Machine and Java native code (libT2DLI.so) library (provided in the variables gathering step) are added to the DFSJVMEV member, and this member will be added to the 
+		data set concatenated in the PROCLIB DD.  This member can also be set with optional flags for gathering JVM usage statistics. See more information at the link provided below.
+		
+	<p>If this member is already present in your environment or in the proclib ${global-DFS_proclib}(RC=4), <b>it will not be replaced by the workflow.</b>
+	To replace the existing member DFSJVMEV with the version provided in this workflow edit the job and the SYSIN DD parm changing from ADD to REPL.
+	</p>		
+		
+		For more information please see <a href="https://www-01.ibm.com/support/knowledgecenter/SSEPH2_13.1.0/com.ibm.ims13.doc.sdg/ims_dfsjvmev_proclib.htm?lang=en">DFSJVMEV</a>
+		
+	</instructions>
+		<weight>5</weight>
+		<skills>System Programmer</skills>
+		<autoEnable>true</autoEnable>
+		<template>
+			<inlineTemplate substitution="true">//*
+//* NOTE: IF THIS MEMBER EXISTS IT WILL NOT BE
+//*       REPLACED. IF YOU WISH TO USE THE SUGGESTED 
+//*       SETTINGS FOR THE JVM OPTIONS CHANGE
+//*       THE SYSIN CONTROL STATEMENT FROM ADD TO REPL
+//*
+//UPDTPRC2    EXEC PGM=IEBUPDTE,PARM=MOD                        
+//SYSPRINT DD   SYSOUT=*                                       
+//SYSUT1   DD   DSNAME=${global-DFS_proclib},DISP=SHR                 
+//SYSUT2   DD   DSNAME=${global-DFS_proclib},DISP=SHR                 
+//SYSIN    DD   DATA                                           
+./        ADD   NAME=DFSJVMEV,LEVEL=00,SOURCE=0,LIST=ALL 
+**********************************************************************
+* Specify the location of Java Virtual Machine (JVM) installation and
+* IMS Java native code (libT2DLI.so)
+**********************************************************************
+LIBPATH=>
+${instance-DFS_jvmpath}/bin/j9vm:>
+${instance-DFS_jvmpath}/bin/:>
+${instance-DFS_imslibpath}/lib
+*
+./      ENDUP
+/*</inlineTemplate>
+				<submitAs maxRc="4">JCL</submitAs>
+				<maxLrecl>80</maxLrecl>
+	<saveAsDataset substitution="true">${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.JOBS(DFSJVMEV)</saveAsDataset>
+		</template>
+	</step>
+	
+	<step name="create_DFSJVMMS">  	<title>Set the Java library classpath in IMS</title>
+	
+		<description>Creates the DFSJVMMS member in IMS PROCLIB data set.
+		<p>
+		Instructions related to this step can be viewed under the Perform tab. You can view the instructions without executing this step.
+		</p>
+		</description>
+		<prereqStep name="GatherVariables"/>
+		<instructions substitution="true">The IMS PROCLIB member DFSJVMMS contains the Java environment settings, JVM options, and the classpath for the IMS Universal Driver and IMS Java dependent region.  
+	<br/>If this member is already present in your environment or in the proclib ${global-DFS_proclib}(RC=4), <b>it will not be replaced by the workflow.</b>
+	<br/>To replace the existing member DFSJVMMS with the version provided in this workflow edit the job and the SYSIN DD parm changing from ADD to REPL.
+	
+	<p>
+	<br>The following JVM options are used by this worfkflow and are a subset of the options allowed</br>
+	<br>-Xmaxf0.8   - set the maximum percentage of heap that must be free after a garbage collection.</br>
+	<br>-Xmx${instance-DFS_max_heapsize}M     - the maximum Java heap size of your program</br>
+	<br>-Xmso${instance-DFS_os_stack_size}k   - stack size for OS threads for 32 bit</br>
+	<br>-Xss${instance-DFS_thread_stack_size}k    -  Java thread stack size</br>
+	<br>-Xms${instance-DFS_initial_heapsize}M      - initial Java heap size</br>
+	</p>
+	In production environments, set the minimum heap size and the maximum heap size to the same value to prevent wasting VM resources used to constantly grow and shrink the heap.
+	<p>For more information see <a href="https://www-01.ibm.com/support/knowledgecenter/SSEPH2_13.1.0/com.ibm.ims13.doc.sdg/ims_dfsjvmms_proclib.htm?lang=en">DFSJMMS</a></p>
+	</instructions>
+		<weight>5</weight>
+		<skills>System Programmer</skills>
+		<autoEnable>true</autoEnable>
+		<template>
+			<inlineTemplate substitution="true">//*
+//* NOTE: IF THIS MEMBER EXISTS IT WILL NOT BE
+//*       REPLACED. IF YOU WISH TO USE THE SUGGESTED 
+//*       SETTINGS FOR THE JVM OPTIONS CHANGE
+//*       THE SYSIN CONTROL STATEMENT FROM ADD TO REPL
+//*
+//UPDTPRC    EXEC PGM=IEBUPDTE,PARM=MOD                        
+//SYSPRINT DD   SYSOUT=*                                       
+//SYSUT1   DD   DSNAME=${global-DFS_proclib},DISP=SHR                 
+//SYSUT2   DD   DSNAME=${global-DFS_proclib},DISP=SHR                 
+//SYSIN    DD   DATA                                           
+./        ADD   NAME=DFSJVMMS,LEVEL=00,SOURCE=0,LIST=ALL       
+********************************************************************
+* Specify the profile that has environment settings and JVM options.
+* The following two JVM options are required.
+********************************************************************
+-Djava.class.path=>
+${instance-DFS_imslibpath}/imsudb.jar:>
+${instance-DFS_imslibpath}/imsutm.jar:>
+${instance-DFS_classpath}:>
+********************************************************************
+* The following JVM options are a subset of the options allowed
+* Xmaxf0.8   - specifies the maximum percentage of heap that must be 
+*              free after a garbage collection
+* Xmx64M     - set the maximum Java heap size of your program
+* Xmso512k   - set stack size for OS threads for 32 bit
+* Xss256k    - set Java thread stack size
+* Xms1M      - set initial Java heap size
+*******************************************************************
+-Xmaxf0.8
+-Xminf0.3
+-Xmx${instance-DFS_max_heapsize}M
+-Xmso${instance-DFS_os_stack_size}k
+-Xss${instance-DFS_thread_stack_size}k
+-Xms${instance-DFS_initial_heapsize}M
+./      ENDUP
+/*</inlineTemplate>
+	<submitAs maxRc="4">JCL</submitAs>
+				<maxLrecl>80</maxLrecl>
+	<saveAsDataset substitution="true">${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.JOBS(DFSJVMMS)</saveAsDataset>
+		</template>
+	</step>
+	
+	
+
+	
+	<step name="create_DFSJVMAP">  	<title>Map PSB name to the Java application</title>
+		<description>Define the PROCLIB member which associates the program name to the Java class name.
+		<p>
+		Instructions related to this step can be viewed under the Perform tab. You can view the instructions without executing this step.
+		</p>
+		</description>
+		<prereqStep name="GatherVariables"/>
+		<instructions substitution="true">Use the DFSJVMAP member of the IMS PROCLIB data set to map upper case Java application names that are specified to IMS.
+	
+		
+		This step associates the program name ${instance-DFS_appname} with the Java application.
+		
+		<p>
+		If this member is already present in your environment or in the proclib ${global-DFS_proclib}(RC=4), this step will add the needed control statements at the end of the member (and after re-sequencing the its content).
+		If the member does not exist, one will be created for you.
+		If the member exist an you want to replace it with the version provided in this workflow edit the job and the SYSIN DD parm and change ADD to REPL. You should also delete any subsequent step.
+
+		
+		For more information <a href="https://www.ibm.com/support/knowledgecenter/SSEPH2_14.1.0/com.ibm.ims14.doc.sdg/ims_dfsjvmap_proclib.htm" >DFSJVMAP member of the IMS PROCLIB data set
+		
+		</a>
+		
+		</p></instructions>
+		<weight>5</weight>
+		<skills>System Programmer</skills>
+		<autoEnable>true</autoEnable>
+		<template>
+			<inlineTemplate substitution="true">//*
+//* ********************************************************
+//*       JCL for Java For IMS z/OSMF workflow V1.0
+//*       -----------------------------------------
+//* TASK: This Job is designed to modify DFSJVAMP member in
+//*       the designated proclib and prepare your application
+//*       to be executed in an IMS environment
+//* NOTE: RC=4 is intended and expected
+//*       If this member does not exist it will be created.
+//*       
+//* *********************************************************
+//UPDTPRC0    EXEC PGM=IEBUPDTE,PARM=MOD                        
+//SYSPRINT DD   SYSOUT=*                                       
+//SYSUT1   DD   DSNAME=${global-DFS_proclib},DISP=SHR                 
+//SYSUT2   DD   DSNAME=${global-DFS_proclib},DISP=SHR                 
+//SYSIN    DD   DATA                                           
+./        ADD   NAME=DFSJVMAP,LEVEL=00,SOURCE=0,LIST=ALL 
+**********************************************************************
+
+* This is a mapping of PSB names to Java applications.
+* The location of the specific file must be specified separately
+* by the DFSJVMMS member in the shareable application classpath.
+*                                                              .
+* PSB          Regions   Java programs
+* --------     -------   -------------
+* ${instance-DFS_appname}     JMP       ${instance-DFS_java_main}
+**********************************************************************
+${instance-DFS_appname}=${instance-DFS_java_main}
+./      ENDUP
+/*
+//UPDTPRC1    EXEC PGM=IEBUPDTE,PARM=MOD,COND=(0,EQ,UPDTPRC0)
+//SYSPRINT DD   SYSOUT=*
+//SYSUT1   DD   DSNAME=${global-DFS_proclib},DISP=SHR
+//SYSUT2   DD   DSNAME=${global-DFS_proclib},DISP=SHR
+//SYSIN    DD   *
+./     CHANGE    NAME=DFSJVMAP,LIST=ALL,SOURCE=0
+./     NUMBER    SEQ1=ALL,NEW1=00000100,INCR=15
+/*
+//UPDTPRC2    EXEC PGM=IEBUPDTE,PARM=MOD,COND=(0,NE,UPDTPRC1)
+//SYSPRINT DD   SYSOUT=*
+//SYSUT1   DD   DSNAME=${global-DFS_proclib},DISP=SHR
+//SYSUT2   DD   DSNAME=${global-DFS_proclib},DISP=SHR
+//SYSIN    DD   *
+./     CHANGE    NAME=DFSJVMAP,LIST=ALL,SOURCE=0
+**********************************************************************  09999905
+* Updated By Java For IMS z/OSMF workflow V1.0                          09999915
+**********************************************************************  09999925
+${instance-DFS_appname}=${instance-DFS_java_main}                       09999935
+*                                                                       09999945
+./      ENDUP
+/*</inlineTemplate>
+		<submitAs maxRc="4">JCL</submitAs>
+				<maxLrecl>80</maxLrecl>
+		<saveAsDataset substitution="true">${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.JOBS(DFSJVMAP)</saveAsDataset>
+		</template>
+	</step>
+
+
+</step>
+
+
+
+
+<step name="DefineIMSResources">
+	<title>Define IMS Resources</title>
+	<description>Define and prepare all the IMS Resources necessary to execute the application in IMS environment
+	<p>
+		Instructions related to this step can be viewed under the Perform tab. You can view the instructions without executing this step.
+		</p>
+		</description>
+
+	<step name="VerifyTSOSPOC"> 			<title>Verify TSO SPOC is setup</title>
+			<description>Verify TSO SPOC is setup.
+			<p>
+		Instructions related to this step can be viewed under the Perform tab. You can view the instructions without executing this step.
+		</p>
+		</description>
+			<prereqStep name="GatherVariables"/>
+			<instructions substitution="true">This step will verify TSO SPOC is available.
+			For more information refer to <a href="https://www.ibm.com/support/knowledgecenter/SSEPH2_14.1.0/com.ibm.ims14.doc.oag/ims_controlling_tsospoc.htm">Controlling IMS with the TSO SPOC application</a>
+			</instructions>
+			<weight>5</weight>
+			<skills>System Programmer</skills>
+			<autoEnable>true</autoEnable>
+			<template>
+				<inlineTemplate substitution="true">//*
+//SPOC      EXEC PGM=CSLUSPOC,
+//  PARM=('IMSPLEX=${global-DFS_IMS_PLEX},ROUTE=${global-DFS_IMS_SSID},WAIT=30,F=WRAP')
+//STEPLIB   DD DSN=${global-DFS_reslib},
+//          DISP=SHR
+//SYSPRINT  DD SYSOUT=*
+//SYSIN     DD *
+        QRY IMS TYPE(ALL) SHOW(ALL)
+    
+/*</inlineTemplate>
+			<submitAs maxRc="0">JCL</submitAs>
+			<maxLrecl>80</maxLrecl>
+			</template>
+
+	</step>
+
+	<step name="CreateProgram"> 			<title>Define your program to IMS </title>
+			<description>Define your application program to IMS.
+			<p>
+		Instructions related to this step can be viewed under the Perform tab. You can view the instructions without executing this step.
+		</p>
+		</description>
+			<prereqStep name="VerifyTSOSPOC"/>
+			<instructions substitution="true">This step will create the program ${instance-DFS_appname}.
+			For more information refer to <a href="https://www-01.ibm.com/support/knowledgecenter/SSEPH2_14.1.0/com.ibm.ims14.doc.cr/imscmds/ims_createpgm.htm?lang=en">CREATE PGM command</a>
+			</instructions>
+			<weight>5</weight>
+			<skills>System Programmer</skills>
+			<autoEnable>true</autoEnable>
+			<template>
+				<inlineTemplate substitution="true">//*
+//SPOC      EXEC PGM=CSLUSPOC,
+//  PARM=('IMSPLEX=${global-DFS_IMS_PLEX},ROUTE=${global-DFS_IMS_SSID},WAIT=30,F=WRAP')
+//STEPLIB   DD DSN=${global-DFS_reslib},
+//          DISP=SHR
+//SYSPRINT  DD SYSOUT=*
+//SYSIN     DD *
+    CREATE PGM NAME(${instance-DFS_appname}) SET( BMPTYPE(N) DOPT(Y) +
+    FP(N) GPSB(N) LANG(JAVA) RESIDENT(N) SCHDTYPE(SERIAL) TRANSTAT(N))
+    
+/*</inlineTemplate>
+			<submitAs maxRc="8">JCL</submitAs>
+			<maxLrecl>80</maxLrecl>
+		    <saveAsDataset substitution="true">${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.JOBS(CREPGM)</saveAsDataset>
+			</template>
+
+	</step>
+
+	
+	<step name="CreateTran">  				<title>Define an IMS Transaction associated with this application</title>
+			<description>Define an IMS Transaction associated with this application (TSOSPOC CREATE TRAN)
+			<p>
+		Instructions related to this step can be viewed under the Perform tab. You can view the instructions without executing this step.
+		</p>
+		</description>
+			<prereqStep name="VerifyTSOSPOC"/>
+			<instructions substitution="true">
+        	        This step will create the transaction associated with the ${instance-DFS_appname} program in IMS.
+					<p>The transaction will use class ${instance-DFS_tranclass}. The transaction will be scheduled for the IMS Java Dependent Region based on
+					the ${global-DFS_IMS_SSID}JMP . 
+					The name of the actual region is dictated by the command: /STA REG ${global-DFS_IMS_SSID}JMP JOBNAME ${global-DFS_IMS_SSID}JMP1 that is executed in a later step of the workflow.
+					</p>
+					
+					<p>For more information refer to <a href="https://www-01.ibm.com/support/knowledgecenter/SSEPH2_14.1.0/com.ibm.ims14.doc.cr/imscmds/ims_createtran.htm?lang=en">CREATE TRAN command</a></p>
+			</instructions>
+			<weight>10</weight>
+			<skills>System Programmer</skills>
+			<autoEnable>true</autoEnable>
+			<template>
+				<inlineTemplate substitution="true">//SPOC      EXEC PGM=CSLUSPOC,
+//  PARM=('IMSPLEX=${global-DFS_IMS_PLEX},ROUTE=${global-DFS_IMS_SSID},WAIT=30,F=WRAP')
+//STEPLIB   DD DISP=SHR,DSN=$global-DFS_reslib
+//SYSPRINT  DD SYSOUT=*
+//SYSIN     DD *
+    CRE TRAN NAME(${instance-DFS_traname}) SET(MSGTYPE(MULTSEG) PGM(${instance-DFS_appname}) CLASS(${instance-DFS_tranclass}))
+/*</inlineTemplate>
+				<submitAs maxRc="8">JCL</submitAs>
+				<maxLrecl>80</maxLrecl>				
+				<saveAsDataset substitution="true">${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.JOBS(CRETRAN)</saveAsDataset>
+			</template>
+
+	</step>
+
+</step>
+
+<step name="StartIMSResources"> 	<title>Start and Ready IMS Resources</title>
+	<description>Start all the IMS Resources, including the PGM, TRAN, and the Java IMS Dependent Region.
+	<p>
+		Instructions related to this step can be viewed under the Perform tab. You can view the instructions without executing this step.
+		</p>
+		</description>
+	<prereqStep name="DefineIMSResources" />
+
+	<step name="StartProgram"> 							<title>Start IMS Program (PGM)</title>
+			<description>Start the IMS program associated with your application.
+			<p>
+		Instructions related to this step can be viewed under the Perform tab. You can view the instructions without executing this step.
+		</p>
+		</description>
+			<prereqStep name="CreateProgram"/>
+			<instructions>Start the IMS program associated with your application using the TSO SPOC interface. The command used is /STA PGM</instructions>
+			<weight>5</weight>
+			<skills>System Programmer</skills>
+			<autoEnable>true</autoEnable>
+			<template>
+				<inlineTemplate substitution="true">//SPOC      EXEC PGM=CSLUSPOC,
+//  PARM=('IMSPLEX=${global-DFS_IMS_PLEX},ROUTE=${global-DFS_IMS_SSID},WAIT=30,F=WRAP')
+//STEPLIB   DD DISP=SHR,DSN=$global-DFS_reslib
+//SYSPRINT  DD SYSOUT=*
+//SYSIN     DD *
+     /STA PGM ${instance-DFS_appname}
+     QRY PGM NAME(${instance-DFS_appname}) SHOW(ALL)
+/*</inlineTemplate>
+				<submitAs>JCL</submitAs>
+				<maxLrecl>80</maxLrecl>
+					<saveAsDataset substitution="true">${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.JOBS(STAPGM)</saveAsDataset>
+			</template>
+	</step>
+
+	<step name="StartTransaction"> 						<title>Start the IMS Transaction (TRAN) </title>
+			<description>Start the IMS transaction associated with your application.
+			<p>
+		Instructions related to this step can be viewed under the Perform tab. You can view the instructions without executing this step.
+		</p>
+		</description>
+			<prereqStep name="CreateTran"/>
+			<instructions>Start the IMS transaction associated with your application using the TSO SPOC interface. The command used is /STA TRAN</instructions>
+			<weight>5</weight>
+			<skills>System Programmer</skills>
+			<autoEnable>true</autoEnable>
+			<template>
+				<inlineTemplate substitution="true">//SPOC      EXEC PGM=CSLUSPOC,
+//  PARM=('IMSPLEX=${global-DFS_IMS_PLEX},ROUTE=${global-DFS_IMS_SSID},WAIT=30,F=WRAP')
+//STEPLIB   DD DISP=SHR,DSN=$global-DFS_reslib
+//SYSPRINT  DD SYSOUT=*
+//SYSIN     DD *
+     /STA TRAN ${instance-DFS_traname}
+/*
+				</inlineTemplate>
+				<submitAs>JCL</submitAs>
+				<maxLrecl>80</maxLrecl>
+					<saveAsDataset substitution="true">${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.JOBS(STATRAN)</saveAsDataset>
+			</template>
+	</step>
+
+	<step name="StartRegion" optional="false"> 			<title>Start the IMS Java message processing (JMP) Region</title>
+			<description>Start the JMP region for the application.
+			<p>
+		Instructions related to this step can be viewed under the Perform tab. You can view the instructions without executing this step.
+		</p>
+		</description>
+			<prereqStep name="create_DFSJVMAP"/>
+			<instructions>Start the IMS JMP</instructions>
+			<weight>5</weight>
+			<skills>System Programmer</skills>
+			<autoEnable>true</autoEnable>
+			<template>
+				<inlineTemplate substitution="true">//*
+//JMPSTRT         EXEC  PGM=IEBGENER
+//SYSPRINT  DD    SYSOUT=*
+//SYSUT2    DD    SYSOUT=(A,INTRDR)
+//SYSIN     DD    DUMMY
+//SYSUT1    DD    DSN=${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.JOBS(${global-DFS_IMS_SSID}JMP),DISP=SHR
+/*</inlineTemplate>
+				<submitAs>JCL</submitAs>
+				<maxLrecl>80</maxLrecl>
+					<saveAsDataset substitution="true">${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.JOBS(STARTJMP)</saveAsDataset>
+			</template>
+	</step>
+
+</step>
+
+<step name="VerifyStatus"> 		<title>Java Application Deployed. Verify resource status.</title>
+	<description>The set-up necessary to run your Java application in an IMS environment is now complete. 
+	This is the final step to verify that you can run your application as an IMS Resource(JMP).
+	<p>
+		Instructions related to this step can be viewed under the Perform tab. You can view the instructions without executing this step.
+		</p>
+		
+	</description>
+	<step name="VerifyProgram">
+			<title>Verify the application status</title>
+			<description>Display the IMS resources associated with your program</description>
+			<instructions>Display the IMS resources associated with your program</instructions>
+			<weight>1</weight>
+			<skills>System Programmer</skills>
+			<autoEnable>true</autoEnable>
+			<template>
+				<inlineTemplate substitution="true">//SPOC      EXEC PGM=CSLUSPOC,
+//  PARM=('IMSPLEX=${global-DFS_IMS_PLEX},ROUTE=${global-DFS_IMS_SSID},WAIT=30,F=WRAP')
+//STEPLIB   DD DISP=SHR,DSN=$global-DFS_reslib
+//SYSPRINT  DD SYSOUT=*
+//SYSIN     DD *
+     QRY PGM NAME(${instance-DFS_appname}) SHOW(ALL)
+     QRY TRAN NAME(${instance-DFS_traname}) SHOW(ALL)
+/*</inlineTemplate>
+				<submitAs>JCL</submitAs>
+				<maxLrecl>80</maxLrecl>
+					<saveAsDataset substitution="true">${instance-TSO_USERID}.${global-DFS_IMS_SSID}.IMSJAVA.JOBS(QRYPGM)</saveAsDataset>
+			</template>
+	</step>
+</step>
+</workflow>
