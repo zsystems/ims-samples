@@ -7,6 +7,7 @@
 	<name>JavaInIMSAdoptionKit</name>
 	<description>Java In IMS Adoption Kit Sample</description>
 	<dependencies>
+	<!-- Obtain the IMS jars from the Java On Demand Feature FMID JMK1406 -->
 		<dependency>
 			<groupId>com.ibm.ims.dli</groupId>
 			<artifactId>imsutm</artifactId>
@@ -28,12 +29,6 @@
 			<scope>system</scope>
 			<systemPath>${project.basedir}/src/main/resources/ImsESConnectAPIJavaV3r1Fix5Interim2.jar</systemPath>
 		</dependency>
-		<dependency>
-			<groupId>commons-codec</groupId>
-			<artifactId>commons-codec</artifactId>
-			<version>1.10</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/src/main/resources/commons-codec-1.10.jar</systemPath>
-		</dependency>
+		
 	</dependencies>
 </project>
