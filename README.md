@@ -1,2 +1,8 @@
 # ims-samples
-This repository contains sample Java code that can be used to develop Java apps to access IMS
+The two sample applications that resided in this repository have been moved to our updated IMS GitHub space.
+
+You may find them both there.
+
+https://github.com/imsdev/ims-java-jmp
+
+https://github.com/imsdev/ims-java-jee-db
